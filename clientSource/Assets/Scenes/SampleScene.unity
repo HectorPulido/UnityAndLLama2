@@ -157,6 +157,8 @@ MonoBehaviour:
   Prompt: "[INST] <<SYS>>\nYou are a girl called Desir\xE9, you are cute and creative,
     don't use *, respond with 30 words or less\n<</SYS>>\n\ntell me about yourself
     [/INST] "
+  temp: 80
+  max_tokens: 50
   TextMeshPro: {fileID: 1606730889}
 --- !u!1 &705507993
 GameObject:
@@ -488,6 +490,8 @@ MonoBehaviour:
 
     tell me about
     yourself [/INST] '
+  temp: 80
+  max_tokens: 50
   TextMeshPro: {fileID: 1606730889}
 --- !u!1 &1318108648
 GameObject:

@@ -1,10 +1,39 @@
 using System;
-using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+
+
+public static class EventType 
+{
+    public const string 
+        generate = "generate",
+        compare = "compare";
+}
+
+
+[Serializable]
+public class LLMMessage
+{
+    public string event_type;
+}
+
+
+[Serializable]
+public class ChatMessage : LLMMessage
+{
+    public string text;
+    public float temp = 0.8f;
+    public int max_tokens = 50;
+    public int top_k = 40;
+    public float top_p = 0.4f;
+    public float repeat_penalty = 1.18f;
+    public int repeat_last_n = 64;
+    public int n_batch = 8;
+}
+
 
 public class ClientLlama : MonoBehaviour
 {
@@ -14,6 +43,8 @@ public class ClientLlama : MonoBehaviour
     private string serverAddress = "ws://localhost:8765";
 
     public static ClientLlama singletonInstance;
+
+    private bool threadLock = false;
 
     async void Start()
     {
@@ -39,9 +70,25 @@ public class ClientLlama : MonoBehaviour
         }
     }
 
-    public async Task<string> SendMessageToServer(string message)
+    public async Task<string> SendMessageToServer(string message, int maxTokens = 20, float temperature = 0.8f)
     {
-        byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+        while(threadLock) {
+            print("Waiting for thread lock");
+            await Task.Delay(5000);
+        }
+
+        threadLock = true;
+        ChatMessage chatMessage = new()
+        {
+            event_type = EventType.generate,
+            text = message,
+            max_tokens = maxTokens,
+            temp = temperature
+        };
+
+        string jsonMessage = JsonUtility.ToJson(chatMessage);
+
+        byte[] messageBytes = Encoding.UTF8.GetBytes(jsonMessage);
         await clientWebSocket.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Text, true, CancellationToken.None);
         print($"Message sent: {message}");
 
@@ -50,8 +97,11 @@ public class ClientLlama : MonoBehaviour
         if (receiveResult.MessageType == WebSocketMessageType.Text)
         {
             string receivedMessage = Encoding.UTF8.GetString(buffer, 0, receiveResult.Count);
+            print($"Message received: {receivedMessage}");
+            threadLock = false;
             return receivedMessage;
         }
+        threadLock = false;
         return "No response received";
     }
 
