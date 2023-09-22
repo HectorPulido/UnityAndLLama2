@@ -19,7 +19,7 @@ class LlamaServer:
         self.port = port
         self.model = GPT4All(llm_model)
         self.translator = Translator()
-        self.model = SentenceTransformer(embedder_model)
+        self.sentence_model = SentenceTransformer(embedder_model)
 
         self.event_handlers = {
             "generate": self.handle_generate_text,
@@ -33,8 +33,8 @@ class LlamaServer:
         query = kwargs.pop("query")
         passage = kwargs.pop("sentences")
 
-        query_embedding = self.model.encode(query)
-        passage_embedding = self.model.encode(passage)
+        query_embedding = self.sentence_model.encode(query)
+        passage_embedding = self.sentence_model.encode(passage)
 
         return util.dot_score(query_embedding, passage_embedding)
 
